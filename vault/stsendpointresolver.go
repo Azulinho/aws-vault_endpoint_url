@@ -9,9 +9,10 @@ import (
 
 // getEndpointResolver resolves endpoints in accordance with
 // https://docs.aws.amazon.com/credref/latest/refdocs/setting-global-sts_regional_endpoints.html
-func getSTSEndpointResolver(stsRegionalEndpoints string) aws.EndpointResolverWithOptionsFunc {
+func getSTSEndpointResolver(stsRegionalEndpoints string, endpointUrl string) aws.EndpointResolverWithOptionsFunc {
 	return func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-		if stsRegionalEndpoints == "legacy" && service == sts.ServiceID {
+
+		if stsRegionalEndpoints == "legacy" && service == sts.ServiceID && endpointUrl == "" {
 			if region == "ap-northeast-1" ||
 				region == "ap-south-1" ||
 				region == "ap-southeast-1" ||
@@ -37,6 +38,31 @@ func getSTSEndpointResolver(stsRegionalEndpoints string) aws.EndpointResolverWit
 			}
 		}
 
+		if service == sts.ServiceID && endpointUrl != "" {
+			if region == "ap-northeast-1" ||
+				region == "ap-south-1" ||
+				region == "ap-southeast-1" ||
+				region == "ap-southeast-2" ||
+				region == "aws-global" ||
+				region == "ca-central-1" ||
+				region == "eu-central-1" ||
+				region == "eu-north-1" ||
+				region == "eu-west-1" ||
+				region == "eu-west-2" ||
+				region == "eu-west-3" ||
+				region == "sa-east-1" ||
+				region == "us-east-1" ||
+				region == "us-east-2" ||
+				region == "us-west-1" ||
+				region == "us-west-2" {
+					log.Println("Using custom STS endpoint")
+
+					return aws.Endpoint{
+						URL:           endpointUrl,
+						SigningRegion: region,
+					}, nil
+				}
+		}
 		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
 	}
 }

@@ -149,6 +149,7 @@ type ProfileSection struct {
 	SourceIdentity          string `ini:"source_identity,omitempty"`
 	CredentialProcess       string `ini:"credential_process,omitempty"`
 	MfaProcess              string `ini:"mfa_process,omitempty"`
+	EndpointUrl             string `ini:"endpoint_url,omitempty"`
 }
 
 // SSOSessionSection is a [sso-session] section of the config file
@@ -382,6 +383,9 @@ func (cl *ConfigLoader) populateFromConfigFile(config *Config, profileName strin
 	if config.MfaProcess == "" {
 		config.MfaProcess = psection.MfaProcess
 	}
+	if config.EndpointUrl == "" {
+		config.EndpointUrl = psection.EndpointUrl
+	}
 	if sessionTags := psection.SessionTags; sessionTags != "" && config.SessionTags == nil {
 		err := config.SetSessionTags(sessionTags)
 		if err != nil {
@@ -490,6 +494,11 @@ func (cl *ConfigLoader) populateFromEnv(profile *Config) {
 		if sourceIdentity := os.Getenv("AWS_SOURCE_IDENTITY"); sourceIdentity != "" && profile.SourceIdentity == "" {
 			profile.SourceIdentity = sourceIdentity
 			log.Printf("Using source_identity %v from AWS_SOURCE_IDENTITY", profile.SourceIdentity)
+		}
+
+		if endpointUrl := os.Getenv("AWS_ENDPOINT_URL"); endpointUrl != "" && profile.EndpointUrl == "" {
+			log.Printf("Using endpoint_url %q from AWS_ENDPOINT_URL", endpointUrl)
+			profile.EndpointUrl = endpointUrl
 		}
 	}
 }
@@ -609,6 +618,9 @@ type Config struct {
 
 	// CredentialProcess specifies external command to run to get an AWS credential
 	CredentialProcess string
+
+	// Endpoint URL for custom endpoints
+	EndpointUrl string
 }
 
 // SetSessionTags parses a comma separated key=vaue string and sets Config.SessionTags map
